@@ -1,9 +1,11 @@
 package vntu.edu;
 
 import org.junit.jupiter.api.Test;
+import vntu.edu.simplex_methods.BaseSimplex;
 import vntu.edu.simplex_methods.Simplex;
 
-import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SimplexTest {
     @Test
@@ -16,9 +18,10 @@ public class SimplexTest {
         boolean[] signs = {false, false};
         double[] objective = {8, 5};
 
-        Simplex simplex = new Simplex(matrix, signs, freeVars, objective);//# 15
+        BaseSimplex simplex = new Simplex(matrix, signs, freeVars, objective);//# 15
         System.out.println("Should print 35, printed: ");
-        System.out.println(Arrays.toString(simplex.solve(true)));
+        var solution = simplex.solve(true);
+        assertEquals(35, solution.objValue());
     }
 
     @Test
@@ -31,10 +34,11 @@ public class SimplexTest {
         double[] freeVars = {15, 9, 24};
         boolean[] signs = {false, false, false};
         double[] objective = {2, 5};
-        Simplex simplex = new Simplex(matrix, signs, freeVars, objective);// # 5
+        BaseSimplex simplex = new Simplex(matrix, signs, freeVars, objective);// # 5
 
         System.out.println("Should print 45, printed: ");
-        System.out.println(Arrays.toString(simplex.solve(true)));
+        var solution = simplex.solve(true);
+        assertEquals(45, solution.objValue());
     }
 
     @Test
@@ -47,10 +51,11 @@ public class SimplexTest {
         double[] freeVars = {18, 10, 8};
         boolean[] signs = {false, false, false};
         double[] objective = {1, -1};
-        Simplex simplex = new Simplex(matrix, signs, freeVars, objective);//# 15
+        BaseSimplex simplex = new Simplex(matrix, signs, freeVars, objective);//# 15
 
         System.out.println("Should print 4, printed: ");
-        System.out.println(Arrays.toString(simplex.solve(true)));
+        var solution = simplex.solve(true);
+        assertEquals(4, solution.objValue());
     }
 
     @Test
@@ -63,10 +68,11 @@ public class SimplexTest {
         double[] freeVars = {9, 6, 8};
         boolean[] signs = {false, false, false};
         double[] objective = {5, -1};
-        Simplex simplex = new Simplex(matrix, signs, freeVars, objective);
+        BaseSimplex simplex = new Simplex(matrix, signs, freeVars, objective);
 
         System.out.println("Should print 15, printed: ");
-        System.out.println(Arrays.toString(simplex.solve(true)));
+        var solution = simplex.solve(true);
+        assertEquals(15, solution.objValue());
     }
 
     @Test
@@ -79,9 +85,10 @@ public class SimplexTest {
         double[] freeVars = {15, 15, 8};
         boolean[] signs = {false, false, false};
         double[] objective = {3, 1};
-        Simplex simplex = new Simplex(matrix, signs, freeVars, objective);
+        BaseSimplex simplex = new Simplex(matrix, signs, freeVars, objective);
 
         System.out.println("Should print 9, printed: ");
-        System.out.println(Arrays.toString(simplex.solve(true)));
+        var solution = simplex.solve(true);
+        assertEquals(9, solution.objValue());
     }
 }
