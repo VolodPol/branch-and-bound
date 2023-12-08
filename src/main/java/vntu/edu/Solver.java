@@ -38,17 +38,17 @@ public class Solver {
 
     private Solution computeNextPlan(double[] plan, int idx, boolean max) {
         double[][] updatedC = getUpdateConstraints(idx);
-        double[] newFreeVars = getUpdateFreeVars(plan[idx], (byte) 0);
+        double[] newFreeVars = getUpdatedFreeVars(plan[idx], (byte) 0);
         boolean[] signs = new boolean[newFreeVars.length];
-        double[] objective = getUpdateObjective();
+        double[] objective = getUpdatedObjective();
 
         Solution left = compute(updatedC, signs, newFreeVars, objective, max);
 
         updatedC = getUpdateConstraints(idx);
-        newFreeVars = getUpdateFreeVars(plan[idx], (byte) 1);
+        newFreeVars = getUpdatedFreeVars(plan[idx], (byte) 1);
         signs = new boolean[newFreeVars.length];
         signs[newFreeVars.length - 1] = true;
-        objective = getUpdateObjective();
+        objective = getUpdatedObjective();
 
         Solution right = compute(updatedC, signs, newFreeVars, objective, max);
         return selectBestSolution(left, right);
@@ -82,13 +82,13 @@ public class Solver {
         return updatedC;
     }
 
-    private double[] getUpdateObjective() {
+    private double[] getUpdatedObjective() {
         double[] newObjective = new double[constraints[0].length];
         System.arraycopy(simplex.getObjective(), 0, newObjective, 0, constraints[0].length);
         return newObjective;
     }
 
-    private double[] getUpdateFreeVars(double plan, byte flag) {
+    private double[] getUpdatedFreeVars(double plan, byte flag) {
         double[] newFreeVars = new double[freeVars.length + 1];
         System.arraycopy(freeVars, 0, newFreeVars, 0, freeVars.length);
         newFreeVars[freeVars.length] = flag == 0 ? floor(plan) : ceil(plan);
@@ -100,7 +100,7 @@ public class Solver {
         double maxFraction = 0;
         final double epsilon = 1e-10;
 
-        for (int i = 0; i < array.length; i++) {
+        for (int i = 0; i < freeVars.length; i++) {
             double currentElement = abs(array[i]);
             double next = ceil(currentElement);
             double prev = floor(currentElement);
