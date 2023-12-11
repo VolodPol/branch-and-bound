@@ -1,6 +1,7 @@
 package vntu.edu.simplex_methods;
 
 import lombok.Getter;
+import vntu.edu.Solution;
 
 import java.util.Arrays;
 

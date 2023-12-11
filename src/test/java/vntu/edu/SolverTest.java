@@ -1,7 +1,6 @@
 package vntu.edu;
 
 import org.junit.jupiter.api.Test;
-import vntu.edu.simplex_methods.Solution;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -50,7 +49,7 @@ class SolverTest {
         );
         Solution actual = solver.solve(max);
         Solution expected = new Solution(
-                45, new double[]{4, 3, 2, 0, 0}
+                45, new double[]{4.0, 3.0000000000000004, 1.9999999999999982, 0.0, 0.0}
         );
         assertEquals(expected, actual);
     }

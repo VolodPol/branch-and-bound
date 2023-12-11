@@ -3,9 +3,8 @@ package vntu.edu;
 import vntu.edu.simplex_methods.BaseSimplex;
 import vntu.edu.simplex_methods.DualSimplex;
 import vntu.edu.simplex_methods.Simplex;
-import vntu.edu.simplex_methods.Solution;
 
-import java.util.Arrays;
+import java.util.*;
 
 import static java.lang.Math.*;
 import static java.lang.Math.abs;
@@ -13,8 +12,8 @@ import static java.lang.Math.abs;
 public class Solver {
     private final double[][] constraints;
     private final double[] freeVars;
+    private final BaseSimplex simplex;
     private Solution baseSolution;
-    private BaseSimplex simplex;
 
     public Solver(double[][] constraints, boolean[] signs, double[] freeVars, double[] objective) {
         this.constraints = Arrays.copyOf(constraints, constraints.length);
@@ -24,25 +23,55 @@ public class Solver {
 
     public Solution solve(boolean max) {
         baseSolution = simplex.solve(max);
+        List<Solution> stageSolutions;
 
-        while (true) {
-            int varIdx = biggestFraction(baseSolution.optimalPlan());
-            if (varIdx == -1)
-                break;
+        do {
+            stageSolutions = new LinkedList<>();
+            double[] plan = baseSolution.optimalPlan();
 
-            baseSolution = computeNextPlan(baseSolution.optimalPlan(), varIdx, max);
-        }
-
+            for (int i = 0; i < plan.length; i++) {//restrict for only valid variables
+                if (hasFraction(plan[i])) {
+                    computeNextPlan(plan, i, max, stageSolutions);
+                }
+            }
+            updateBaseSolution(stageSolutions);
+        } while (Arrays.stream(baseSolution.optimalPlan()).filter(this::hasFraction).count() != 0);
         return baseSolution;
     }
 
-    private Solution computeNextPlan(double[] plan, int idx, boolean max) {
+    private void updateBaseSolution(List<Solution> stageSolutions) {
+        stageSolutions.sort(Comparator.comparingDouble(Solution::objValue).reversed());
+        List<Solution> withIntegerPlan = stageSolutions.stream()
+                .filter(solution -> {
+                    for (double var : solution.optimalPlan())
+                        if (hasFraction(var)) return false;
+                    return true;
+                }).toList();
+
+        if (withIntegerPlan.isEmpty()) {
+            baseSolution = stageSolutions.get(0);
+            return;
+        }
+        List<Solution> integerSolutions = withIntegerPlan.stream()
+                .filter(s -> !hasFraction(s.objValue()))
+                .toList();
+
+        if (integerSolutions.isEmpty()) {
+            baseSolution = withIntegerPlan.get(0);
+            return;
+        }
+        baseSolution = integerSolutions.get(0);
+    }
+
+    private void computeNextPlan(double[] plan, int idx, boolean max, List<Solution> accumulator) {
         double[][] updatedC = getUpdateConstraints(idx);
         double[] newFreeVars = getUpdatedFreeVars(plan[idx], (byte) 0);
         boolean[] signs = new boolean[newFreeVars.length];
         double[] objective = getUpdatedObjective();
 
         Solution left = compute(updatedC, signs, newFreeVars, objective, max);
+        if (left.objValue() < baseSolution.objValue())
+            accumulator.add(left);
 
         updatedC = getUpdateConstraints(idx);
         newFreeVars = getUpdatedFreeVars(plan[idx], (byte) 1);
@@ -51,7 +80,8 @@ public class Solver {
         objective = getUpdatedObjective();
 
         Solution right = compute(updatedC, signs, newFreeVars, objective, max);
-        return selectBestSolution(left, right);
+        if (right.objValue() < baseSolution.objValue())
+            accumulator.add(right);
     }
 
     private Solution compute(double[][] c, boolean[] s, double[] f, double[] o, boolean max) {
@@ -67,10 +97,6 @@ public class Solver {
             }
         }
         return solution;
-    }
-
-    private Solution selectBestSolution(Solution left, Solution right) {
-        return left.objValue() > right.objValue() ? left : right;
     }
 
     private double[][] getUpdateConstraints(int idx) {
@@ -95,27 +121,14 @@ public class Solver {
         return newFreeVars;
     }
 
-    private int biggestFraction(double[] array) {
-        int index = -1;
-        double maxFraction = 0;
+    private boolean hasFraction(double element) {
         final double epsilon = 1e-10;
 
-        for (int i = 0; i < freeVars.length; i++) {
-            double currentElement = abs(array[i]);
-            double next = ceil(currentElement);
-            double prev = floor(currentElement);
+        double currentElement = abs(element);
+        double currentFraction = 0;
+        if (abs(ceil(currentElement) - currentElement) > epsilon)
+            currentFraction = currentElement % 1;
 
-            double currentFraction = 0;
-            if (abs(currentElement - prev) < abs(next - currentElement))
-                currentFraction = currentElement % 1;
-            else if (abs(next - currentElement) > epsilon)
-                currentFraction = currentElement % 1;
-
-            if (currentFraction > epsilon && currentFraction > maxFraction) {
-                maxFraction = currentFraction;
-                index = i;
-            }
-        }
-        return index;
+        return currentFraction > epsilon;
     }
 }

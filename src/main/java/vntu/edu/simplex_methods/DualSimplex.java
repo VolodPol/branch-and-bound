@@ -1,5 +1,6 @@
 package vntu.edu.simplex_methods;
 
+import vntu.edu.Solution;
 import static java.lang.Math.abs;
 
 public class DualSimplex extends BaseSimplex {

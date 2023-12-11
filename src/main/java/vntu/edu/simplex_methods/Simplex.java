@@ -1,5 +1,7 @@
 package vntu.edu.simplex_methods;
 
+import vntu.edu.Solution;
+
 public class Simplex extends BaseSimplex {
     public Simplex(double[][] constraints, boolean[] signs, double[] freeVars, double[] objective) {
         super(constraints, signs, freeVars, objective);
