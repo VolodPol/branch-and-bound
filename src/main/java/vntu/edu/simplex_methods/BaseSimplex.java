@@ -114,4 +114,9 @@ public abstract class BaseSimplex {
         }
         return sum;
     }
+
+    protected static double[][] cloneMatrix(double[][] matrix) {
+        return Arrays.stream(matrix).map(double[]::clone)
+                .toArray(double[][]::new);
+    }
 }
