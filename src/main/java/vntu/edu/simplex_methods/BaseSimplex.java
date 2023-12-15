@@ -12,7 +12,7 @@ public abstract class BaseSimplex {
     protected final double[] freeVars;
     protected double[] objective;
 
-    public BaseSimplex(double[][] constraints, boolean[] signs, double[] freeVars, double[] objective) {
+    public BaseSimplex(double[][] constraints, boolean[] signs, double[] freeVars, double[] objective) {//copy here, not in the impl
         this.constraints = constraints;
         this.signs = signs;
         this.freeVars = freeVars;

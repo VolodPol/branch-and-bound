@@ -27,19 +27,17 @@ public class Solver {
         List<Solution> stageSolutions;
 
         do {
-            System.out.print("=".repeat(60) + "\n");
             stageSolutions = new LinkedList<>();
             double[] plan = baseSolution.optimalPlan();
 
             for (int i = 0; i < initialModel.constraints()[0].length; i++) {
                 if (hasFraction(plan[i])) {
-                    Solution left = computeLeftSolution(baseSolution, plan, i, max);
-                    Solution right = computeRightSolution(baseSolution, plan, i, max);
+                    Solution left = computeSolution(true, plan, i, max);
+                    Solution right = computeSolution(false, plan, i, max);
                     addSolutions(List.of(left, right), stageSolutions);
                 }
             }
             updateBaseSolution(stageSolutions);
-            System.out.print("=".repeat(60) + "\n");
         } while (Arrays.stream(baseSolution.optimalPlan()).filter(this::hasFraction).count() != 0);
         System.out.printf("Optimal integer plan: %s", baseSolution);
         return baseSolution;
@@ -48,11 +46,7 @@ public class Solver {
     private void updateBaseSolution(List<Solution> stageSolutions) {
         stageSolutions.sort(Comparator.comparingDouble(Solution::objValue).reversed());
         List<Solution> withIntegerPlan = stageSolutions.stream()
-                .filter(solution -> {
-                    for (double var : solution.optimalPlan())
-                        if (hasFraction(var)) return false;
-                    return true;
-                }).toList();
+                .filter(solution -> Arrays.stream(solution.optimalPlan()).noneMatch(this::hasFraction)).toList();
 
         if (withIntegerPlan.isEmpty()) {
             if (!stageSolutions.isEmpty())
@@ -70,54 +64,31 @@ public class Solver {
         baseSolution = integerSolutions.get(0);
     }
 
-    private Solution computeLeftSolution(Solution last, double[] plan, int idx, boolean max) {// if x < 0 -> assign old baseSolution
+    private Solution computeSolution(boolean isLeft, double[] plan, int idx, boolean max) {
         double[][] updatedC;
         double[] newFreeVars, objective;
         boolean[] signs;
-        Model leftModel;
 
-        leftModel = cache.get(last);
-        if (leftModel != null) {
-            updatedC = getUpdateConstraints(leftModel.constraints, idx);
-            newFreeVars = getUpdatedFreeVars(leftModel.freeVars, plan[idx], Math::floor);
-            signs = getUpdatedSigns(leftModel.signs, newFreeVars.length);
-            objective = getUpdatedObjective(leftModel.objective);
+        Model lastModel = cache.get(baseSolution);
+        Function<Double, Double> action = isLeft ? Math::floor : Math::ceil;
+        if (lastModel != null) {
+            updatedC = getUpdatedConstraints(lastModel.constraints, idx);
+            newFreeVars = getUpdatedFreeVars(lastModel.freeVars, plan[idx], action);
+            signs = getUpdatedSigns(lastModel.signs, newFreeVars.length);
+            objective = getUpdatedObjective(lastModel.objective);
         } else {
-            updatedC = getUpdateConstraints(initialModel.constraints(), idx);
-            newFreeVars = getUpdatedFreeVars(initialModel.freeVars(), plan[idx], Math::floor);
+            updatedC = getUpdatedConstraints(initialModel.constraints(), idx);
+            newFreeVars = getUpdatedFreeVars(initialModel.freeVars(), plan[idx], action);
             signs = getUpdatedSigns(initialModel.signs(), newFreeVars.length);
             objective = getUpdatedObjective(simplex.getObjective());
         }
-        leftModel = new Model(updatedC, signs, newFreeVars, objective);
-        Solution left = compute(leftModel, max);
-        cache.put(left, leftModel);
-        return left;
-    }
-
-    private Solution computeRightSolution(Solution last, double[] plan, int idx, boolean max) {
-        double[][] updatedC;
-        double[] newFreeVars, objective;
-        boolean[] signs;
-        Model rightModel;
-
-        rightModel = cache.get(last);
-        if (rightModel != null) {
-            updatedC = getUpdateConstraints(rightModel.constraints, idx);
-            newFreeVars = getUpdatedFreeVars(rightModel.freeVars, plan[idx], Math::ceil);
-            signs = getUpdatedSigns(rightModel.signs, newFreeVars.length);
+        if (!isLeft)
             signs[newFreeVars.length - 1] = true;
-            objective = getUpdatedObjective(rightModel.objective);
-        } else {
-            updatedC = getUpdateConstraints(initialModel.constraints(), idx);
-            newFreeVars = getUpdatedFreeVars(initialModel.freeVars(), plan[idx], Math::ceil);
-            signs = getUpdatedSigns(initialModel.signs(), newFreeVars.length);
-            signs[newFreeVars.length - 1] = true;
-            objective = getUpdatedObjective(simplex.getObjective());
-        }
-        rightModel = new Model(updatedC, signs, newFreeVars, objective);
-        Solution right = compute(rightModel, max);
-        cache.put(right, rightModel);
-        return right;
+        lastModel = new Model(updatedC, signs, newFreeVars, objective);
+        Solution solution = compute(lastModel, max);
+        cache.put(solution, lastModel);
+
+        return solution;
     }
 
     private void addSolutions(List<Solution> source, List<Solution> destination) {
@@ -149,7 +120,7 @@ public class Solver {
         return solution;
     }
 
-    private double[][] getUpdateConstraints(double[][] lastConstraints, int idx) {
+    private double[][] getUpdatedConstraints(double[][] lastConstraints, int idx) {
         double[][] updatedC = new double[lastConstraints.length + 1][lastConstraints[0].length];
         for (int i = 0; i < lastConstraints.length; i++) {
             System.arraycopy(lastConstraints[i], 0, updatedC[i], 0, lastConstraints[i].length);
@@ -164,7 +135,7 @@ public class Solver {
         return newObjective;
     }
 
-    private double[] getUpdatedFreeVars(double[] lastFreeVars, double bound, Function<Double, Double> action) {//function instead of 'byte flat'
+    private double[] getUpdatedFreeVars(double[] lastFreeVars, double bound, Function<Double, Double> action) {
         double[] newFreeVars = new double[lastFreeVars.length + 1];
         System.arraycopy(lastFreeVars, 0, newFreeVars, 0, lastFreeVars.length);
         newFreeVars[lastFreeVars.length] = action.apply(bound);
