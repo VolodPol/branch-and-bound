@@ -2,16 +2,10 @@ package vntu.edu.simplex_methods;
 
 import vntu.edu.Solution;
 import static java.lang.Math.abs;
-import static java.util.Arrays.copyOf;
 
 public class DualSimplex extends BaseSimplex {
     public DualSimplex(double[][] constraints, boolean[] signs, double[] freeVars, double[] objective) {
-        super(
-                cloneMatrix(constraints),
-                copyOf(signs, signs.length),
-                copyOf(freeVars, freeVars.length),
-                copyOf(objective, objective.length)
-        );
+        super(constraints, signs, freeVars, objective);
     }
 
     @Override
@@ -67,9 +61,7 @@ public class DualSimplex extends BaseSimplex {
         int length = objective.length;
         double[] estimates = new double[length];
         for (int i = 0; i < length; i++)
-            estimates[i] = -indexRow[i] / (constraints[idx][i] < 0
-                    ? constraints[idx][i]
-                    : 0);
+            estimates[i] = -indexRow[i] / constraints[idx][i];
         return estimates;
     }
 
@@ -77,7 +69,7 @@ public class DualSimplex extends BaseSimplex {
         int idx = -1;
         double saved = Double.MAX_VALUE;
         for (int i = 0; i < estimates.length; i++) {
-            if (estimates[i] < saved) {
+            if (estimates[i] > 0 && estimates[i] < saved) {
                 saved = estimates[i];
                 idx = i;
             } else if (estimates[i] == saved && rowIdx < constraints.length - 1) {

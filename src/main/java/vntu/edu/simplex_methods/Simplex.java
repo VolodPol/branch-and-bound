@@ -1,16 +1,10 @@
 package vntu.edu.simplex_methods;
 
 import vntu.edu.Solution;
-import static java.util.Arrays.copyOf;
 
 public class Simplex extends BaseSimplex {
     public Simplex(double[][] constraints, boolean[] signs, double[] freeVars, double[] objective) {
-        super(
-                cloneMatrix(constraints),
-                copyOf(signs, signs.length),
-                copyOf(freeVars, freeVars.length),
-                copyOf(objective, objective.length)
-        );
+        super(constraints, signs, freeVars, objective);
     }
 
     @Override

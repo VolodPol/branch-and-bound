@@ -2,8 +2,8 @@ package vntu.edu.simplex_methods;
 
 import lombok.Getter;
 import vntu.edu.Solution;
-
 import java.util.Arrays;
+import static java.util.Arrays.copyOf;
 
 @Getter
 public abstract class BaseSimplex {
@@ -13,10 +13,10 @@ public abstract class BaseSimplex {
     protected double[] objective;
 
     public BaseSimplex(double[][] constraints, boolean[] signs, double[] freeVars, double[] objective) {//copy here, not in the impl
-        this.constraints = constraints;
-        this.signs = signs;
-        this.freeVars = freeVars;
-        this.objective = objective;
+        this.constraints = cloneMatrix(constraints);
+        this.signs = copyOf(signs, signs.length);
+        this.freeVars = copyOf(freeVars, freeVars.length);
+        this.objective = copyOf(objective, objective.length);
     }
 
     public abstract Solution solve(boolean max);
@@ -44,7 +44,7 @@ public abstract class BaseSimplex {
         int rows = constraints.length;
         int cols = constraints[0].length;
         for (int i = 0; i < rows; i++) {
-            double[] old = Arrays.copyOf(constraints[i], cols);
+            double[] old = copyOf(constraints[i], cols);
             double[] extension = new double[rows];
             extension[i] = 1;
             constraints[i] = new double[cols + rows];
@@ -56,7 +56,7 @@ public abstract class BaseSimplex {
     private void extendObjective() {
         int oldLength = objective.length;
         double[] output = new double[oldLength + constraints.length];
-        double[] temp = Arrays.copyOf(objective, oldLength);
+        double[] temp = copyOf(objective, oldLength);
         System.arraycopy(temp, 0, output, 0, oldLength);
         objective = output;
     }
